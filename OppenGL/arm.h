@@ -1,7 +1,13 @@
 #ifndef ARM_H 
 #define ARM_H  
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846 
+#endif
+
 #include <glad/glad.h> 
+
+#include <cmath>
 
 #include <vector>
 #include <string> 
@@ -22,12 +28,18 @@
 #include <GLFW/glfw3.h>
 
 
+
+
 class Arm {
 private:
     float x, y;
     float speed;
     float width, height;
     unsigned int VAO, VBO, EBO;
+    unsigned int VAO_vertical, VAO_horizontal;
+    unsigned int VBO_vertical, VBO_horizontal;
+    unsigned int EBO_vertical, EBO_horizontal;
+
     unsigned int texture1, texture2;
     Shader shader;
     std::vector<Collide*> collideObjects;
@@ -54,6 +66,8 @@ private:
 
     int hp;
     bool isAlive;
+
+    float angel;
 
     unsigned int loadTexture(const char* path) {
         unsigned int textureID;
@@ -140,42 +154,73 @@ public:
 
 
 
-    void setupMesh() {
-        float vertices[] = {
-            // Positions                                // Colors           // Texture Coords
-             characterWidth / 2,  characterHeight / 2, 0.0f, 1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Top Right
-             characterWidth / 2, -characterHeight / 2, 0.0f, 0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // Bottom Right
-            -characterWidth / 2, -characterHeight / 2, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, 1.0f, // Bottom Left
-            -characterWidth / 2,  characterHeight / 2, 0.0f, 1.0f, 1.0f, 0.0f,   0.0f, 0.0f  // Top Left 
-        };
+void setupMesh() {
+    // Вертикальное состояние
+    float vertices_vertical[] = {
+        // Positions                              // Colors           // Texture Coords
+          0.7f,  0.37f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Top Right
+          0.7f, -0.37f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // Bottom Right
+         -0.7f, -0.37f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f, // Bottom Left
+         -0.7f,  0.37f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 0.0f  // Top Left 
+    };
 
-        unsigned int indices[] = {
-            0, 1, 3,
-            1, 2, 3
-        };
+    // Горизонтальное состояние
+    float vertices_horizontal[] = {
+        // Positions                              // Colors           // Texture Coords
+          0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Top Right
+          0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // Bottom Right
+         -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f, // Bottom Left
+         -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 0.0f  // Top Left 
+    };
 
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);
+    unsigned int indices[] = {
+        0, 1, 3,
+        1, 2, 3
+    };
 
-        glBindVertexArray(VAO);
+    // Настройка вертикального VAO
+    glGenVertexArrays(1, &VAO_vertical);
+    glGenBuffers(1, &VBO_vertical);
+    glGenBuffers(1, &EBO_vertical);
 
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBindVertexArray(VAO_vertical);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_vertical);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_vertical), vertices_vertical, GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_vertical);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-        glEnableVertexAttribArray(2);
+    // Настройка горизонтального VAO
+    glGenVertexArrays(1, &VAO_horizontal);
+    glGenBuffers(1, &VBO_horizontal);
+    glGenBuffers(1, &EBO_horizontal);
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-    }
+    glBindVertexArray(VAO_horizontal);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_horizontal);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_horizontal), vertices_horizontal, GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_horizontal);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
 
     float getX() const { return x; }
     float getY() const { return y; }
@@ -232,6 +277,12 @@ public:
         }
     }
 
+    void ro_calcul(float posx, float posy) {
+        std::cout << "maus x,y: " << posx << " " << posy << ";    player x,y:" << x<< " " << y << std::endl;
+        angel = std::atan2(posy, posx);
+        angel -= 1.5f;
+    }
+
     void draw(float mixValue, GLFWwindow* window) {
         shader.Use();
 
@@ -245,38 +296,64 @@ public:
         }
 
         double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos); 
+        glfwGetCursorPos(window, &xpos, &ypos);
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+        float clickX = (2.0f * xpos) / width - 1.0f;
+        float clickY = 1.0f - (2.0f * ypos) / height;
 
-        glm::mat4 transform;
-        transform = glm::translate(transform, glm::vec3(0.5f, 0.5f, 0.0f));
-        transform = glm::rotate(transform, (GLfloat)glfwGetTime() * 50.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+        // Adjust click coordinates based on enemy position
+        clickX -= x;
+        clickY -= y;
 
-        // Get matrix's uniform location and set matrix
+        ro_calcul(clickX, clickY);
+
+        float angle_normalized = fmod(angel, 2 * M_PI);
+        if (angle_normalized < 0) angle_normalized += 2 * M_PI;
+
+        bool use_vertical = (angle_normalized > M_PI / 4 && angle_normalized < 3 * M_PI / 4) ||
+            (angle_normalized > 5 * M_PI / 4 && angle_normalized < 7 * M_PI / 4);
+
+        float pi = M_PI;
+
+        glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(x, y, 0.0f));
+        transform = glm::rotate(transform, angel, glm::vec3(0.0f, 0.0f, 1.0f));
+
+        transform = glm::scale(transform, glm::vec3(characterWidth, characterHeight, 1.0f));
+
+
+        // Временно отключим вращение для отладки
+        // transform = glm::rotate(transform, (GLfloat)glfwGetTime() * 50.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+
+        // Установка uniform-переменных
         GLint transformLoc = glGetUniformLocation(shader.Program, "transform");
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
 
-        glUniform1f(glGetUniformLocation(shader.Program, "mixValue"), mixValue);
-        glUniform1f(glGetUniformLocation(shader.Program, "y_mov"), y);
-        glUniform1f(glGetUniformLocation(shader.Program, "x_mov"), x);
+        //glUniform1f(glGetUniformLocation(shader.Program, "mixValue"), mixValue);
+        //glUniform1f(glGetUniformLocation(shader.Program, "y_mov"), y);
+        //glUniform1f(glGetUniformLocation(shader.Program, "x_mov"), x);
         //glUniform1f(glGetUniformLocation(shader.Program, "y_target"), xpos);
         //glUniform1f(glGetUniformLocation(shader.Program, "x_target"), ypos);
 
         shader.setVec4("texCoords", texCoords.x, texCoords.y, texCoords.z, texCoords.w);
 
 
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
+        glBindVertexArray(use_vertical ? VAO_vertical : VAO_horizontal); 
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
+        glBindVertexArray(0); 
     }
 
     void processInput(GLFWwindow* window, float deltaTime) {
         float dx = 0;
         float dy = 0;
 
-        std::cout <<"X:  " << character->getX() << ",   " << x << ";  Y: " << character->getY() << ",   " << y << std::endl;
+        //std::cout <<"X:  " << character->getX() << ",   " << x << ";  Y: " << character->getY() << ",   " << y << std::endl;
 
-
-        if (character->getX() > x) {
+        if (x > (character->getX() - 0.8) || x < (character->getX() + 0.8)) {
+            x = character->getX();
+        }
+        else if (character->getX() > x) {
             dx += 1.0f;
         }
         if (character->getX() < x) {
@@ -286,10 +363,10 @@ public:
             verticalVelocity = character->getY();
         }
         else if (character->getY() >= y) {
-            y = character->getY() + 0.0f; //0.251f
+            y = character->getY() + 0.19f; //0.251f
         }
         if (character->getY() <= y) {
-            y = character->getY() + 0.0f; //0.251f
+            y = character->getY() + 0.19f; //0.251f
         }
 
         move(dx, dy, deltaTime);

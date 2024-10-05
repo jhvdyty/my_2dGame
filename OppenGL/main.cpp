@@ -92,9 +92,9 @@ int main() {
     );
 
     Arm arm(
-        0.0f, 0.0f, 0.1f, 0.5f, 1.0f,
+        0.0f, 0.0f, 0.01f, 0.05f, 2.0f,
         "vertex_arm.glsl", "fragment_arm.glsl",
-        "texture/arm.png"
+        "texture/arm.png" //
     );
 
     player.addCollideObject(&ground); 
