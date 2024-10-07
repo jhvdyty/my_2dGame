@@ -69,44 +69,32 @@ private:
 
     float angel;
 
-    unsigned int loadTexture(const char* path) {
+    unsigned int loadTexture(const char* path)
+    {
         unsigned int textureID;
         glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
 
-
-
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         int width, height, nrChannels;
-        unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 4);
+
+        unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
 
         if (data) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
             glGenerateMipmap(GL_TEXTURE_2D);
-
-            int framesPerRow = 4;  // Adjust based on your spritesheet
-            int framesPerColumn = 4;
-            float frameWidth = 1.0f / framesPerRow;
-            float frameHeight = 1.0f / framesPerColumn;
-
-            for (int y = 0; y < framesPerColumn; ++y) {
-                for (int x = 0; x < framesPerRow; ++x) {
-                    frames.push_back(Vec4(
-                        x * frameWidth, y * frameHeight,
-                        (x + 1) * frameWidth, (y + 1) * frameHeight
-                    ));
                 }
-            }
-        }
         else {
             std::cout << "Failed to load texture" << std::endl;
         }
         stbi_image_free(data);
         return textureID;
+
     }
 
 
@@ -116,8 +104,7 @@ public:
         const char* vertexPath, const char* fragmentPath,
         const char* texturePath)
         : x(startX), y(startY), width(characterWidth), height(characterHeight), speed(moveSpeed),
-        shader(vertexPath, fragmentPath), verticalVelocity(0.0f), isOnGround(false),
-        currentFrame(0), frameTime(0.07f), timeSinceLastFrame(0.0f), isMoving(false), facingRight(true),
+        shader(vertexPath, fragmentPath), verticalVelocity(0.0f), isOnGround(false), isMoving(false), facingRight(true),
         quadLeft(-width / 2), quadRight(width / 2), quadTop(height / 2), quadBottom(-height / 2),
         hp(100), isAlive(true)  // Initialize hp and isAlive
     {
@@ -290,7 +277,7 @@ void setupMesh() {
         glBindTexture(GL_TEXTURE_2D, texture1);
         shader.setInt("ourTexture1", 0);
 
-        Vec4 texCoords = frames[currentFrame];
+        glm::vec4 texCoords = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f); // x, y = top-left, z, w = bottom-right
         if (!facingRight) {
             std::swap(texCoords.x, texCoords.z);
         }
