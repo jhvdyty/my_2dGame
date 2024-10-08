@@ -1,4 +1,4 @@
-#ifndef ARM_H 
+п»ї#ifndef ARM_H 
 #define ARM_H  
 
 #ifndef M_PI
@@ -52,8 +52,8 @@ private:
     const float jumpStrength = 3.0f;
     bool isOnGround;
 
-    float characterWidth = 0.25f;  // Ширина персонажа в игровом мире
-    float characterHeight = 0.65f; // Высота персонажа в игровом мире
+    float characterWidth = 0.25f;  // ГГЁГ°ГЁГ­Г  ГЇГҐГ°Г±Г®Г­Г Г¦Г  Гў ГЁГЈГ°Г®ГўГ®Г¬ Г¬ГЁГ°ГҐ
+    float characterHeight = 0.65f; // Г‚Г»Г±Г®ГІГ  ГЇГҐГ°Г±Г®Г­Г Г¦Г  Гў ГЁГЈГ°Г®ГўГ®Г¬ Г¬ГЁГ°ГҐ
 
     std::vector<Vec4> frames;  // Texture coordinates for each frame
     int currentFrame;
@@ -69,34 +69,64 @@ private:
 
     float angel;
 
-    unsigned int loadTexture(const char* path)
-    {
+    unsigned int loadTexture(const char* path) {
         unsigned int textureID;
         glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
 
+
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         int width, height, nrChannels;
-
-        unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
+        unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 4);
 
         if (data) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
             glGenerateMipmap(GL_TEXTURE_2D);
+
+            int framesPerRow = 4;  // Adjust based on your spritesheet
+            int framesPerColumn = 4;
+            float frameWidth = 1.0f / framesPerRow;
+            float frameHeight = 1.0f / framesPerColumn;
+
+            for (int y = 0; y < framesPerColumn; ++y) {
+                for (int x = 0; x < framesPerRow; ++x) {
+                    frames.push_back(Vec4(
+                        x * frameWidth, y * frameHeight,
+                        (x + 1) * frameWidth, (y + 1) * frameHeight
+                    ));
                 }
+            }
+        }
         else {
             std::cout << "Failed to load texture" << std::endl;
         }
         stbi_image_free(data);
         return textureID;
-
     }
 
+    void calculateTextureCoords() {
+        int framesPerRow = 4;
+        int framesPerColumn = 2;  // РР·РјРµРЅРµРЅРѕ РЅР° 2, С‚Р°Рє РєР°Рє Сѓ РЅР°СЃ 2 СЂСЏРґР° РєР°РґСЂРѕРІ
+        float frameWidth = 1.0f / framesPerRow;
+        float frameHeight = 1.0f / framesPerColumn;
+
+        frames.clear();
+        for (int y = 0; y < framesPerColumn; ++y) {
+            for (int x = 0; x < framesPerRow; ++x) {
+                frames.push_back(Vec4(
+                    x * frameWidth,
+                    1.0f - (y + 1) * frameHeight,  // РРЅРІРµСЂС‚РёСЂСѓРµРј Y-РєРѕРѕСЂРґРёРЅР°С‚Сѓ
+                    (x + 1) * frameWidth,
+                    1.0f - y * frameHeight  // РРЅРІРµСЂС‚РёСЂСѓРµРј Y-РєРѕРѕСЂРґРёРЅР°С‚Сѓ
+                ));
+            }
+        }
+    }
 
 
 public:
@@ -104,25 +134,40 @@ public:
         const char* vertexPath, const char* fragmentPath,
         const char* texturePath)
         : x(startX), y(startY), width(characterWidth), height(characterHeight), speed(moveSpeed),
-        shader(vertexPath, fragmentPath), verticalVelocity(0.0f), isOnGround(false), isMoving(false), facingRight(true),
+        shader(vertexPath, fragmentPath), verticalVelocity(0.0f), isOnGround(false),
+        currentFrame(0), frameTime(0.07f), timeSinceLastFrame(0.0f), isMoving(false), facingRight(true),
         quadLeft(-width / 2), quadRight(width / 2), quadTop(height / 2), quadBottom(-height / 2),
         hp(100), isAlive(true)  // Initialize hp and isAlive
     {
         setupMesh();
         texture1 = loadTexture(texturePath);
+        calculateTextureCoords();
+    }
+
+    void updateAnimation(float deltaTime) {
+        if (isMoving) {
+            timeSinceLastFrame += deltaTime;
+            if (timeSinceLastFrame >= frameTime) {
+                currentFrame = (currentFrame + 1) % 8;  // РџСЂРµРґРїРѕР»Р°РіР°РµРј, С‡С‚Рѕ Сѓ РЅР°СЃ 8 РєР°РґСЂРѕРІ Р°РЅРёРјР°С†РёРё
+                timeSinceLastFrame = 0.0f;
+            }
+        }
+        else {
+            currentFrame = 0;  // РљР°РґСЂ РїРѕРєРѕСЏ
+        }
     }
 
     void addCollideObject(Collide* obj) {
         collideObjects.push_back(obj);
     }
-    void addEnemiCollideObject(Character* obj) { 
-        character = obj; 
-    } 
+    void addEnemiCollideObject(Character* obj) {
+        character = obj;
+    }
     void addEnemiRotateObject(Enemi* obj) {
         enemi = obj;
     }
 
-    
+
 
     bool getIsAlive() const { return isAlive; }
 
@@ -141,73 +186,73 @@ public:
 
 
 
-void setupMesh() {
-    // Вертикальное состояние
-    float vertices_vertical[] = {
-        // Positions                              // Colors           // Texture Coords
-          0.7f,  0.37f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Top Right
-          0.7f, -0.37f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // Bottom Right
-         -0.7f, -0.37f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f, // Bottom Left
-         -0.7f,  0.37f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 0.0f  // Top Left 
-    };
+    void setupMesh() {
+        // Г‚ГҐГ°ГІГЁГЄГ Г«ГјГ­Г®ГҐ Г±Г®Г±ГІГ®ГїГ­ГЁГҐ
+        float vertices_vertical[] = {
+            // Positions                              // Colors           // Texture Coords
+              0.7f,  0.37f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Top Right
+              0.7f, -0.37f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // Bottom Right
+             -0.7f, -0.37f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f, // Bottom Left
+             -0.7f,  0.37f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 0.0f  // Top Left 
+        };
 
-    // Горизонтальное состояние
-    float vertices_horizontal[] = {
-        // Positions                              // Colors           // Texture Coords
-          0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Top Right
-          0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // Bottom Right
-         -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f, // Bottom Left
-         -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 0.0f  // Top Left 
-    };
+        // ГѓГ®Г°ГЁГ§Г®Г­ГІГ Г«ГјГ­Г®ГҐ Г±Г®Г±ГІГ®ГїГ­ГЁГҐ
+        float vertices_horizontal[] = {
+            // Positions                              // Colors           // Texture Coords
+              0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Top Right
+              0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // Bottom Right
+             -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f, // Bottom Left
+             -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 0.0f  // Top Left 
+        };
 
-    unsigned int indices[] = {
-        0, 1, 3,
-        1, 2, 3
-    };
+        unsigned int indices[] = {
+            0, 1, 3,
+            1, 2, 3
+        };
 
-    // Настройка вертикального VAO
-    glGenVertexArrays(1, &VAO_vertical);
-    glGenBuffers(1, &VBO_vertical);
-    glGenBuffers(1, &EBO_vertical);
+        // ГЌГ Г±ГІГ°Г®Г©ГЄГ  ГўГҐГ°ГІГЁГЄГ Г«ГјГ­Г®ГЈГ® VAO
+        glGenVertexArrays(1, &VAO_vertical);
+        glGenBuffers(1, &VBO_vertical);
+        glGenBuffers(1, &EBO_vertical);
 
-    glBindVertexArray(VAO_vertical);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_vertical);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_vertical), vertices_vertical, GL_STATIC_DRAW);
-    
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_vertical);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        glBindVertexArray(VAO_vertical);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_vertical);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_vertical), vertices_vertical, GL_STATIC_DRAW);
 
-    // Настройка горизонтального VAO
-    glGenVertexArrays(1, &VAO_horizontal);
-    glGenBuffers(1, &VBO_horizontal);
-    glGenBuffers(1, &EBO_horizontal);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_vertical);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glBindVertexArray(VAO_horizontal);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, VBO_horizontal);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_horizontal), vertices_horizontal, GL_STATIC_DRAW);
-    
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_horizontal);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+        // ГЌГ Г±ГІГ°Г®Г©ГЄГ  ГЈГ®Г°ГЁГ§Г®Г­ГІГ Г«ГјГ­Г®ГЈГ® VAO
+        glGenVertexArrays(1, &VAO_horizontal);
+        glGenBuffers(1, &VBO_horizontal);
+        glGenBuffers(1, &EBO_horizontal);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-}
+        glBindVertexArray(VAO_horizontal);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_horizontal);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_horizontal), vertices_horizontal, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_horizontal);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
 
     float getX() const { return x; }
     float getY() const { return y; }
@@ -251,9 +296,15 @@ void setupMesh() {
             isOnGround = true;
         }
 
-        isMoving = (dx != 0);
-        if (dx > 0) facingRight = true;
-        else if (dx < 0) facingRight = false;
+        isMoving = (character->getDX() != 0);
+        if (character->getDX() > 0) facingRight = true;
+        else if (character->getDX() < 0) facingRight = false;
+
+        //isMoving = (dx != 0);
+        //if (dx > 0) facingRight = true;
+        //else if (dx < 0) facingRight = false;
+
+        updateAnimation(deltaTime);
     }
 
 
@@ -265,22 +316,24 @@ void setupMesh() {
     }
 
     void ro_calcul(float posx, float posy) {
-        std::cout << "maus x,y: " << posx << " " << posy << ";    player x,y:" << x<< " " << y << std::endl;
+        //std::cout << "maus x,y: " << posx << " " << posy << ";    player x,y:" << x << " " << y << std::endl;
         angel = std::atan2(posy, posx);
         angel -= 1.5f;
     }
 
-    void draw(float mixValue, GLFWwindow* window) {
+    void draw(GLFWwindow* window, float mixValue, float deltaTime) {
         shader.Use();
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         shader.setInt("ourTexture1", 0);
 
-        glm::vec4 texCoords = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f); // x, y = top-left, z, w = bottom-right
+        Vec4 texCoords = frames[currentFrame];
         if (!facingRight) {
             std::swap(texCoords.x, texCoords.z);
         }
+        //std::cout << "facingRight: " << facingRight << ";     isMoving: " << isMoving << std::endl;
+
 
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
@@ -310,10 +363,10 @@ void setupMesh() {
         transform = glm::scale(transform, glm::vec3(characterWidth, characterHeight, 1.0f));
 
 
-        // Временно отключим вращение для отладки
+        // Г‚Г°ГҐГ¬ГҐГ­Г­Г® Г®ГІГЄГ«ГѕГ·ГЁГ¬ ГўГ°Г Г№ГҐГ­ГЁГҐ Г¤Г«Гї Г®ГІГ«Г Г¤ГЄГЁ
         // transform = glm::rotate(transform, (GLfloat)glfwGetTime() * 50.0f, glm::vec3(0.0f, 0.0f, 1.0f));
 
-        // Установка uniform-переменных
+        // Г“Г±ГІГ Г­Г®ГўГЄГ  uniform-ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»Гµ
         GLint transformLoc = glGetUniformLocation(shader.Program, "transform");
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
 
@@ -326,10 +379,12 @@ void setupMesh() {
         shader.setVec4("texCoords", texCoords.x, texCoords.y, texCoords.z, texCoords.w);
 
 
-        glBindVertexArray(use_vertical ? VAO_vertical : VAO_horizontal); 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
-        glBindVertexArray(0); 
+        glBindVertexArray(use_vertical ? VAO_vertical : VAO_horizontal);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
     }
+
+
 
     void processInput(GLFWwindow* window, float deltaTime) {
         float dx = 0;

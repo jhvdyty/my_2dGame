@@ -44,6 +44,9 @@
     <ClInclude Include="arm.h">
       <Filter>Файлы ресурсов</Filter>
     </ClInclude>
+    <ClInclude Include="crosshair.h">
+      <Filter>Файлы ресурсов</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment_full.glsl">
@@ -62,6 +65,12 @@
       <Filter>Файлы ресурсов</Filter>
     </None>
     <None Include="fragment_arm.glsl">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="vertex_crosshair.glsl">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="fragment_crosshair.glsl">
       <Filter>Файлы ресурсов</Filter>
     </None>
   </ItemGroup>

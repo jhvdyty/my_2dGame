@@ -13,6 +13,7 @@
 #include "collide.h"
 #include "enemi.h"
 #include "arm.h"
+#include "crosshair.h"
 
 float lastFrame = 0.0f; // Время последнего кадра
 
@@ -72,6 +73,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
 
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 
     Collide ground(0.0f, -0.9f, 2.0f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl"); 
@@ -97,6 +99,8 @@ int main() {
         "texture/arm.png" //
     );
 
+    Crosshair crosshair(0.03f);
+
     player.addCollideObject(&ground); 
     player.addCollideObject(&platform1); 
     player.addCollideObject(&platform2); 
@@ -116,6 +120,7 @@ int main() {
 
 
     glfwSetMouseButtonCallback(window, global_mouse_button_callback); 
+
 
     //glVertexAttribPointer(1, 2, GL_FLOAT, GLFW_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
     //glEnableVertexAttribArray(1);
@@ -138,12 +143,13 @@ int main() {
         //GLfloat timeValue = glfwGetTime();
         //GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
         //GLint vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+
         ground.draw();
         platform1.draw();
         platform2.draw();
 
         arm.processInput(window, deltaTime);
-        arm.draw(mixValue, window);
+        arm.draw(window, mixValue, deltaTime);
 
         processInput(window);
         player.processInput(window, deltaTime);
@@ -160,6 +166,8 @@ int main() {
                 it = enemies.erase(it);
             }
         }
+
+        crosshair.draw(window);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

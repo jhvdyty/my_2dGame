@@ -113,7 +113,8 @@ public:
         const char* texturePath)
         : x(startX), y(startY), width(characterWidth), height(characterHeight), speed(moveSpeed),
         shader(vertexPath, fragmentPath), verticalVelocity(0.0f), isOnGround(false),
-        currentFrame(0), frameTime(0.07f), timeSinceLastFrame(0.0f), isMoving(false), facingRight(true) {
+        currentFrame(0), frameTime(0.07f), timeSinceLastFrame(0.0f), isMoving(false), facingRight(true) 
+    {
         setupMesh();
         texture1 = loadTexture(texturePath);
         calculateTextureCoords();
@@ -271,9 +272,10 @@ public:
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
     }
+    float dx = 0;
 
     void processInput(GLFWwindow* window, float deltaTime) {
-        float dx = 0;
+        dx = 0;
          
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { 
             dx -= 1.0f;
@@ -287,6 +289,7 @@ public:
 
         move(dx, 0, deltaTime);
     }
+    float getDX() const { return dx; }
 
     ~Character() {
         glDeleteVertexArrays(1, &VAO);
