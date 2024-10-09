@@ -321,7 +321,7 @@ public:
         angel -= 1.5f;
     }
 
-    void draw(GLFWwindow* window, float mixValue, float deltaTime) {
+    void draw(GLFWwindow* window, float deltaTime) {
         shader.Use();
 
         glActiveTexture(GL_TEXTURE0);

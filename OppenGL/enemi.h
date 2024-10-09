@@ -284,7 +284,7 @@ public:
         }
     }
 
-    void draw(float mixValue) {
+    void draw() {
         shader.Use();
 
         glActiveTexture(GL_TEXTURE0);
@@ -297,7 +297,6 @@ public:
         }
 
 
-        glUniform1f(glGetUniformLocation(shader.Program, "mixValue"), mixValue);
         glUniform1f(glGetUniformLocation(shader.Program, "y_mov"), y);
         glUniform1f(glGetUniformLocation(shader.Program, "x_mov"), x);
 

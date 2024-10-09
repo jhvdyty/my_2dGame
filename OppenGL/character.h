@@ -248,7 +248,7 @@ public:
         }
     }
 
-    void draw(GLFWwindow* window, float mixValue, float deltaTime) {
+    void draw(GLFWwindow* window, float deltaTime) {
         shader.Use();
 
         glActiveTexture(GL_TEXTURE0);
@@ -260,8 +260,6 @@ public:
             std::swap(texCoords.x, texCoords.z);
         }
 
-
-        glUniform1f(glGetUniformLocation(shader.Program, "mixValue"), mixValue);
         glUniform1f(glGetUniformLocation(shader.Program, "y_mov"), y);
         glUniform1f(glGetUniformLocation(shader.Program, "x_mov"), x);
 

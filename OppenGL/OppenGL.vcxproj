@@ -159,6 +159,7 @@
     <ClInclude Include="collide.h" />
     <ClInclude Include="crosshair.h" />
     <ClInclude Include="enemi.h" />
+    <ClInclude Include="GameState.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>

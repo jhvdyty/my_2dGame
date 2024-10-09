@@ -8,6 +8,7 @@ out vec2 TexCoord;
 
 uniform float y_mov;
 uniform float x_mov;
+
 uniform vec4 texCoords;
 
 void main()
