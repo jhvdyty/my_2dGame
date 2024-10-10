@@ -14,6 +14,7 @@
 #include "arm.h"
 #include "crosshair.h"
 
+class Level1;
 class Level2;
 
 // Base class for all game levels
@@ -36,7 +37,7 @@ class GameManager {
 private:
     static GameManager* instance;
     std::stack<std::unique_ptr<GameLevel>> levels;
-    GLFWwindow* window;
+    GLFWwindow* window = nullptr; // Fix: Initialize window pointer
     std::vector<Enemi*>* activeEnemies = nullptr;
 
     static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -66,7 +67,9 @@ public:
         activeEnemies = enemies;
     }
 
-    void changeLevel(std::unique_ptr<GameLevel> level) {
+    // Fix: Use template to properly handle derived types
+    template<typename T>
+    void changeLevel(std::unique_ptr<T> level) {
         if (!levels.empty()) {
             levels.top()->cleanup();
             levels.pop();
@@ -79,7 +82,7 @@ public:
         float lastFrame = 0.0f;
 
         while (!glfwWindowShouldClose(window)) {
-            float currentFrame = static_cast<float>(glfwGetTime());
+            float currentFrame = static_cast<float>(glfwGetTime()); // Fix: Explicit cast to float
             float deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
 
@@ -182,7 +185,7 @@ public:
         enemi = nullptr;
     }
 
-    void draw(float deltaTime) override {
+    void draw(float deltaTime) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -210,11 +213,11 @@ public:
 
         crosshair->draw(window);
 
-        //if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        //    GameManager::getInstance()->changeLevel(
-        //        std::make_unique<Level1>(window)
-        //    );
-        //}
+        if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
+            GameManager::getInstance()->changeLevel<Level1>(
+                std::make_unique<Level1>(window)
+            );
+        }
 
 
     }
@@ -321,7 +324,7 @@ public:
         enemi = nullptr;
     }
 
-    void draw(float deltaTime) override {
+    void draw(float deltaTime) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -352,7 +355,7 @@ public:
         crosshair->draw(window);
 
         if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
-            GameManager::getInstance()->changeLevel(
+            GameManager::getInstance()->changeLevel<Level2>(
                 std::make_unique<Level2>(window)
             );
         }
@@ -386,7 +389,7 @@ public:
         // Draw menu components
 
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-            GameManager::getInstance()->changeLevel(
+            GameManager::getInstance()->changeLevel<Level1>(
                 std::make_unique<Level1>(window)
             );
         }
