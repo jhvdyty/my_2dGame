@@ -274,6 +274,8 @@ public:
 
     void processInput(GLFWwindow* window, float deltaTime) {
         dx = 0;
+
+        //std::cout << "X: " << x << ";      Y:" << y << std::endl;
          
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { 
             dx -= 1.0f;

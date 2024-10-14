@@ -5,6 +5,8 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 #include "shader.h"
 #include "stb_image.h"
@@ -16,6 +18,23 @@
 
 class Level1;
 class Level2;
+
+class Timer {
+private:
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+
+public:
+    void start() {
+        start_time = std::chrono::high_resolution_clock::now();
+    }
+
+    double elapsed() {
+        auto end_time = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration<double, std::milli>(end_time - start_time).count();
+    }
+};
+
+Timer timer;
 
 // Base class for all game levels
 class GameLevel {
@@ -124,10 +143,10 @@ public:
         crosshair(nullptr) {}
 
     void init() override {
-        ground = new Collide(0.0f, -0.9f, 2.0f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl");
+        ground = new Collide(0.0f, -0.9f, 4.0f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl");
 
         player = new Character(
-            0.0f, 0.0f, 0.1f, 0.7f, 0.5f,
+            -0.9f, 0.0f, 0.1f, 0.7f, 0.5f,
             "vertex.glsl", "fragment.glsl",
             "texture/character/character.png"
         );
@@ -186,6 +205,9 @@ public:
     }
 
     void draw(float deltaTime) {
+
+        std::cout << timer.elapsed() << std::endl;
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -213,11 +235,31 @@ public:
 
         crosshair->draw(window);
 
-        if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
-            GameManager::getInstance()->changeLevel<Level1>(
-                std::make_unique<Level1>(window)
-            );
+
+        if (player->getX() < -1.0f) {
+            if (timer.elapsed() > 4000) {
+                GameManager::getInstance()->changeLevel<Level1>(
+                    std::make_unique<Level1>(window)
+                );
+                timer.start();
+            }
         }
+
+        if (player->getY() < -2.0f) {
+            if (timer.elapsed() > 4000) {
+                GameManager::getInstance()->changeLevel<Level2>(
+                    std::make_unique<Level2>(window)
+                );
+                timer.start();
+            }
+        }
+
+
+        //if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
+        //    GameManager::getInstance()->changeLevel<Level1>(
+        //        std::make_unique<Level1>(window)
+        //    );
+        //}
 
 
     }
@@ -251,12 +293,12 @@ public:
         crosshair(nullptr) {}
 
     void init() override {
-        ground = new Collide(0.0f, -0.9f, 2.0f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl");
+        ground = new Collide(0.0f, -0.9f, 4.0f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl");
         platform1 = new Collide(0.3f, -0.5f, 0.5f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl");
         platform2 = new Collide(-0.4f, -0.08f, 0.5f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl");
 
         player = new Character(
-            0.0f, 0.0f, 0.1f, 0.7f, 0.5f,
+            0.9f, 0.0f, 0.1f, 0.7f, 0.5f,
             "vertex.glsl", "fragment.glsl",
             "texture/character/character.png"
         );
@@ -354,11 +396,30 @@ public:
 
         crosshair->draw(window);
 
-        if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
-            GameManager::getInstance()->changeLevel<Level2>(
-                std::make_unique<Level2>(window)
-            );
+        if (player->getX() > 1.0f) {
+            if (timer.elapsed() > 4000) {
+                GameManager::getInstance()->changeLevel<Level2>(
+                    std::make_unique<Level2>(window)
+                );
+                timer.start();
+            }
+
         }
+
+        if (player->getY() < -2.0f) {
+            if (timer.elapsed() > 4000) {
+                GameManager::getInstance()->changeLevel<Level1>(
+                    std::make_unique<Level1>(window)
+                );
+                timer.start();
+            }
+        }
+
+        //if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
+        //    GameManager::getInstance()->changeLevel<Level2>(
+        //        std::make_unique<Level2>(window)
+        //    );
+        //}
 
     }
 
@@ -383,6 +444,8 @@ public:
     }
 
     void draw(float deltaTime) override {
+        timer.start();
+
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
