@@ -49,6 +49,10 @@ private:
     int hp;
     bool isAlive;
 
+    float attackCooldown;
+    float timeSinceLastAttack;
+    int damage;
+
     unsigned int loadTexture(const char* path) {
         unsigned int textureID;
         glGenTextures(1, &textureID);
@@ -118,12 +122,13 @@ public:
         shader(vertexPath, fragmentPath), verticalVelocity(0.0f), isOnGround(false),
         currentFrame(0), frameTime(0.07f), timeSinceLastFrame(0.0f), isMoving(false), facingRight(true),
         quadLeft(-width / 2), quadRight(width / 2), quadTop(height / 2), quadBottom(-height / 2),
-        hp(100), isAlive(true)  // Initialize hp and isAlive
+        hp(100), isAlive(true), attackCooldown(1.0f), timeSinceLastAttack(0.0f), damage(10)
     {
         setupMesh();
         texture1 = loadTexture(texturePath);
         calculateTextureCoords();
     }
+
 
     void updateAnimation(float deltaTime) {
         if (isMoving) {
@@ -174,7 +179,6 @@ public:
     }
 
     bool getIsAlive() const { return isAlive; }
-
     bool isColliding(float newX, float newY) {
         for (const auto& obj : collideObjects) {
             if (newX + width / 2 >= obj->getX() - obj->getWidth() / 2 &&
@@ -188,6 +192,38 @@ public:
         return false; // No collision
     }
 
+    bool isCollidingWithPlayer() {
+        float enemyLeft = x - width / 2;
+        float enemyRight = x + width / 2;
+        float enemyTop = y + height / 2;
+        float enemyBottom = y - height / 2;
+
+        float playerLeft = character->getX() - character->getWidth() / 2;
+        float playerRight = character->getX() + character->getWidth() / 2;
+        float playerTop = character->getY() + character->getHeight() / 2;
+        float playerBottom = character->getY() - character->getHeight() / 2;
+
+        return (enemyLeft < playerRight &&
+            enemyRight > playerLeft &&
+            enemyTop > playerBottom &&
+            enemyBottom < playerTop);
+    }
+
+    void attackPlayer() {
+        bool isCollidingWithPlayer = this->isCollidingWithPlayer();
+        std::cout << "Enemy position: (" << x << ", " << y << ")" << std::endl;
+        std::cout << "Player position: (" << character->getX() << ", " << character->getY() << ")" << std::endl;
+        std::cout << "Attacking player: cooldown: " << timeSinceLastAttack
+            << ", colliding: " << isCollidingWithPlayer
+            << ", distance: " << std::sqrt(std::pow(x - character->getX(), 2) + std::pow(y - character->getY(), 2))
+            << std::endl;
+
+        if (timeSinceLastAttack >= attackCooldown && isCollidingWithPlayer) {
+            character->takeDamage(damage);
+            timeSinceLastAttack = 0.0f;
+            std::cout << "Attack successful!" << std::endl;
+        }
+    }
 
 
     void setupMesh() {
@@ -284,7 +320,14 @@ public:
         }
     }
 
+    void update(float deltaTime) {
+        timeSinceLastAttack += deltaTime;
+        // ... другие обновления, если необходимо ...
+    }
+
+
     void draw() {
+
         shader.Use();
 
         glActiveTexture(GL_TEXTURE0);
@@ -332,6 +375,9 @@ public:
         }
 
         move(dx, dy, deltaTime);
+
+        update(deltaTime);
+        attackPlayer();
     }
 
     ~Enemi() {

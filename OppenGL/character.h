@@ -47,6 +47,10 @@ private:
     bool isMoving;
     bool facingRight;
 
+    int hp;
+    float invincibilityTime;
+    float timeSinceLastHit;
+
     unsigned int loadTexture(const char* path) {
         unsigned int textureID;
         glGenTextures(1, &textureID);
@@ -113,12 +117,36 @@ public:
         const char* texturePath)
         : x(startX), y(startY), width(characterWidth), height(characterHeight), speed(moveSpeed),
         shader(vertexPath, fragmentPath), verticalVelocity(0.0f), isOnGround(false),
-        currentFrame(0), frameTime(0.07f), timeSinceLastFrame(0.0f), isMoving(false), facingRight(true) 
+        currentFrame(0), frameTime(0.07f), timeSinceLastFrame(0.0f), isMoving(false), facingRight(true),
+        hp(100), invincibilityTime(1.0f), timeSinceLastHit(0.0f)  // Инициализация новых членов
     {
         setupMesh();
         texture1 = loadTexture(texturePath);
         calculateTextureCoords();
     }
+
+    void setPosition(float x, float y) {
+        this->x = x;
+        this->y = y;
+    }
+
+    void takeDamage(int damage) {
+        if (timeSinceLastHit >= invincibilityTime) {
+            hp -= damage;
+            timeSinceLastHit = 0.0f;
+            std::cout << "Player took " << damage << " damage. Remaining HP: " << hp << std::endl;
+            if (hp <= 0) {
+                std::cout << "Player defeated!" << std::endl;
+                // Здесь можно добавить логику окончания игры или респавна
+            }
+        }
+    }
+    int getHP() const { return hp; }
+
+    float getWidth() const { return width; }
+    float getHeight() const { return height; }
+
+
 
     void updateAnimation(float deltaTime) {
         if (isMoving) {
@@ -248,7 +276,13 @@ public:
         }
     }
 
+    void update(float deltaTime) {
+        timeSinceLastHit += deltaTime;
+        // ... другие обновления, если необходимо ...
+    }
+
     void draw(GLFWwindow* window, float deltaTime) {
+
         shader.Use();
 
         glActiveTexture(GL_TEXTURE0);
