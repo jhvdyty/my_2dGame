@@ -211,12 +211,12 @@ public:
 
     void attackPlayer() {
         bool isCollidingWithPlayer = this->isCollidingWithPlayer();
-        std::cout << "Enemy position: (" << x << ", " << y << ")" << std::endl;
-        std::cout << "Player position: (" << character->getX() << ", " << character->getY() << ")" << std::endl;
-        std::cout << "Attacking player: cooldown: " << timeSinceLastAttack
-            << ", colliding: " << isCollidingWithPlayer
-            << ", distance: " << std::sqrt(std::pow(x - character->getX(), 2) + std::pow(y - character->getY(), 2))
-            << std::endl;
+        //std::cout << "Enemy position: (" << x << ", " << y << ")" << std::endl;
+        //std::cout << "Player position: (" << character->getX() << ", " << character->getY() << ")" << std::endl;
+        //std::cout << "Attacking player: cooldown: " << timeSinceLastAttack
+        //    << ", colliding: " << isCollidingWithPlayer
+        //    << ", distance: " << std::sqrt(std::pow(x - character->getX(), 2) + std::pow(y - character->getY(), 2))
+        //    << std::endl;
 
         if (timeSinceLastAttack >= attackCooldown && isCollidingWithPlayer) {
             character->takeDamage(damage);

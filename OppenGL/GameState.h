@@ -124,7 +124,12 @@ public:
         crosshair(nullptr) {}
 
     void init() override {
-        ground = new Collide(0.0f, -0.9f, 2.0f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl");
+        ground = new Collide(
+            0.0f, -0.9f, 2.0f, 0.1f, 1.0f,
+            "vertex_full.glsl",
+            "fragment_full.glsl",
+            "texture/wall.jpeg"
+        );
 
         player = new Character(
             -0.9f, 0.0f, 0.1f, 0.7f, 0.5f,
@@ -224,6 +229,11 @@ public:
                 std::make_unique<Level2>(window)
             );
         }
+        else if (!player->getIsAlive()) {
+            GameManager::getInstance()->changeLevel<Level2>(
+                std::make_unique<Level2>(window)
+            );
+        }
 
 
     }
@@ -257,9 +267,24 @@ public:
         crosshair(nullptr) {}
 
     void init() override {
-        ground = new Collide(0.0f, -0.9f, 2.0f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl");
-        platform1 = new Collide(0.3f, -0.5f, 0.5f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl");
-        platform2 = new Collide(-0.4f, -0.08f, 0.5f, 0.1f, 1.0f, "vertex_full.glsl", "fragment_full.glsl");
+        ground = new Collide(
+            0.0f, -0.9f, 2.0f, 0.1f, 1.0f, 
+            "vertex_full.glsl", 
+            "fragment_full.glsl",
+            "texture/wall.jpeg"
+        );
+        platform1 = new Collide(
+            0.3f, -0.5f, 0.5f, 0.1f, 1.0f, 
+            "vertex_full.glsl", 
+            "fragment_full.glsl",
+            "texture/wall.jpeg"
+        );
+        platform2 = new Collide(
+            -0.4f, -0.08f, 0.5f, 0.1f, 1.0f,
+            "vertex_full.glsl",
+            "fragment_full.glsl",
+            "texture/wall.jpeg"
+        );
 
         player = new Character(
             0.9f, 0.0f, 0.1f, 0.7f, 0.5f,
@@ -369,6 +394,10 @@ public:
         else if (player->getY() < -2.0f) {
             GameManager::getInstance()->changeLevel<Level1>( 
                 std::make_unique<Level1>(window) 
+            );
+        } else if (!player->getIsAlive()) {
+            GameManager::getInstance()->changeLevel<Level1>(
+                std::make_unique<Level1>(window)
             );
         }
 

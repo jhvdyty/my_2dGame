@@ -50,6 +50,7 @@ private:
     int hp;
     float invincibilityTime;
     float timeSinceLastHit;
+    bool isAlive;
 
     unsigned int loadTexture(const char* path) {
         unsigned int textureID;
@@ -118,7 +119,7 @@ public:
         : x(startX), y(startY), width(characterWidth), height(characterHeight), speed(moveSpeed),
         shader(vertexPath, fragmentPath), verticalVelocity(0.0f), isOnGround(false),
         currentFrame(0), frameTime(0.07f), timeSinceLastFrame(0.0f), isMoving(false), facingRight(true),
-        hp(100), invincibilityTime(1.0f), timeSinceLastHit(0.0f)  // Инициализация новых членов
+        hp(100), invincibilityTime(1.0f), timeSinceLastHit(0.0f), isAlive(true) // Инициализация новых членов
     {
         setupMesh();
         texture1 = loadTexture(texturePath);
@@ -138,9 +139,11 @@ public:
             if (hp <= 0) {
                 std::cout << "Player defeated!" << std::endl;
                 // Здесь можно добавить логику окончания игры или респавна
+                isAlive = false;
             }
         }
     }
+    bool getIsAlive() const { return isAlive; }
     int getHP() const { return hp; }
 
     float getWidth() const { return width; }
