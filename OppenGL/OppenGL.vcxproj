@@ -156,6 +156,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arm.h" />
+    <ClInclude Include="bullet_trace.h" />
     <ClInclude Include="collide.h" />
     <ClInclude Include="crosshair.h" />
     <ClInclude Include="enemi.h" />
@@ -164,7 +165,9 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fragment_BulletTrace.glsl" />
     <None Include="fragment_crosshair.glsl" />
+    <None Include="vertex_BulletTrace.glsl" />
     <None Include="vertex_crosshair.glsl" />
     <None Include="fragment.glsl" />
     <None Include="fragment_arm.glsl" />

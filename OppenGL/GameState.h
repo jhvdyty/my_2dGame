@@ -140,7 +140,8 @@ public:
         enemi = new Enemi(
             0.0f, 1.0f, 0.1f, 0.5f, 0.1f,
             "vertex.glsl", "fragment.glsl",
-            "texture/brickwall.jpg"
+            "texture/enemi_texture.png",
+            "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl"
         );
 
         arm = new Arm(
@@ -206,7 +207,7 @@ public:
         for (auto it = enemies.begin(); it != enemies.end();) {
             if ((*it)->getIsAlive()) {
                 (*it)->processInput(window, deltaTime);
-                (*it)->draw();
+                (*it)->draw(deltaTime);
                 ++it;
             }
             else {
@@ -295,7 +296,8 @@ public:
         enemi = new Enemi(
             0.0f, 1.0f, 0.1f, 0.5f, 0.1f,
             "vertex.glsl", "fragment.glsl",
-            "texture/brickwall.jpg"
+            "texture/enemi_texture.png",
+            "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl"
         );
 
         arm = new Arm(
@@ -373,7 +375,7 @@ public:
         for (auto it = enemies.begin(); it != enemies.end();) {
             if ((*it)->getIsAlive()) {
                 (*it)->processInput(window, deltaTime);
-                (*it)->draw();
+                (*it)->draw(deltaTime);
                 ++it;
             }
             else {

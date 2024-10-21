@@ -50,6 +50,9 @@
     <ClInclude Include="GameState.h">
       <Filter>Файлы ресурсов</Filter>
     </ClInclude>
+    <ClInclude Include="bullet_trace.h">
+      <Filter>Файлы ресурсов</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment_full.glsl">
@@ -74,6 +77,12 @@
       <Filter>Файлы ресурсов</Filter>
     </None>
     <None Include="fragment_crosshair.glsl">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="vertex_BulletTrace.glsl">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="fragment_BulletTrace.glsl">
       <Filter>Файлы ресурсов</Filter>
     </None>
   </ItemGroup>

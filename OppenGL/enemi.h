@@ -13,6 +13,7 @@
 #include "stb_image.h"
 #include "collide.h"
 #include "character.h"
+#include "bullet_trace.h"
 
 #include <GLFW/glfw3.h>
 
@@ -34,8 +35,8 @@ private:
     const float jumpStrength = 3.0f;
     bool isOnGround;
 
-    float characterWidth = 0.1f;  // Ширина персонажа в игровом мире
-    float characterHeight = 0.5f; // Высота персонажа в игровом мире
+    float characterWidth = 0.2f;  // Ширина персонажа в игровом мире
+    float characterHeight = 0.2f; // Высота персонажа в игровом мире
 
     std::vector<Vec4> frames;  // Texture coordinates for each frame
     int currentFrame;
@@ -52,6 +53,9 @@ private:
     float attackCooldown;
     float timeSinceLastAttack;
     int damage;
+
+    std::vector<BulletTrace> bulletTraces;
+    Shader bulletTraceShader;
 
     unsigned int loadTexture(const char* path) {
         unsigned int textureID;
@@ -117,10 +121,11 @@ private:
 public:
     Enemi(float startX, float startY, float characterWidth, float characterHeight, float moveSpeed,
         const char* vertexPath, const char* fragmentPath,
-        const char* texturePath)
+        const char* texturePath,
+        const char* bulletTraceVertexPath, const char* bulletTraceFragmentPath)
         : x(startX), y(startY), width(characterWidth), height(characterHeight), speed(moveSpeed),
-        shader(vertexPath, fragmentPath), verticalVelocity(0.0f), isOnGround(false),
-        currentFrame(0), frameTime(0.07f), timeSinceLastFrame(0.0f), isMoving(false), facingRight(true),
+        shader(vertexPath, fragmentPath), bulletTraceShader(bulletTraceVertexPath, bulletTraceFragmentPath),
+        timeSinceLastFrame(0.0f), isMoving(false), facingRight(true),
         quadLeft(-width / 2), quadRight(width / 2), quadTop(height / 2), quadBottom(-height / 2),
         hp(100), isAlive(true), attackCooldown(1.0f), timeSinceLastAttack(0.0f), damage(10)
     {
@@ -152,7 +157,7 @@ public:
     }
 
     void handleMouseClick(GLFWwindow* window, int button, int action, int mods) {
-        if (!isAlive) return;  // Don't process clicks if the enemy is already dead
+        if (!isAlive) return;
 
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
             double xpos, ypos;
@@ -168,6 +173,10 @@ public:
 
             if (clickX >= quadLeft && clickX <= quadRight &&
                 clickY >= quadBottom && clickY <= quadTop) {
+                // Hit detected, create a bullet trace
+                float traceX = x + clickX;  // Convert to world coordinates
+                float traceY = y + clickY;
+                bulletTraces.emplace_back(traceX, traceY, 0.05f, 1.0f, "texture/bullet_trace.png", bulletTraceShader, width, height);
                 hp -= 5;
                 std::cout << "Enemy hit! HP: " << hp << std::endl;
                 if (hp <= 0) {
@@ -177,6 +186,20 @@ public:
             }
         }
     }
+
+    void updateAndDrawBulletTraces(float deltaTime) {
+        for (auto it = bulletTraces.begin(); it != bulletTraces.end();) {
+            it->update(deltaTime);
+            if (it->isAlive()) {
+                it->draw();
+                ++it;
+            }
+            else {
+                it = bulletTraces.erase(it);
+            }
+        }
+    }
+
 
     bool getIsAlive() const { return isAlive; }
     bool isColliding(float newX, float newY) {
@@ -326,12 +349,12 @@ public:
     }
 
 
-    void draw() {
+    void draw(float deltaTime) {
 
         shader.Use();
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
+        glBindTexture(GL_TEXTURE_2D, texture1 );
         shader.setInt("ourTexture1", 0);
 
         Vec4 texCoords = frames[currentFrame];
@@ -349,6 +372,8 @@ public:
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
+
+        updateAndDrawBulletTraces(deltaTime);
     }
 
     void processInput(GLFWwindow* window, float deltaTime) {

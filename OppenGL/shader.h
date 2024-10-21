@@ -20,6 +20,8 @@ public:
 		glUniform4f(glGetUniformLocation(Program, name.c_str()), x, y, z, w);
 	}
 
+	
+
 	Shader(const GLchar* vertexPath, const GLchar* fragmentPath) {
 
 		std::string vertexCode;
