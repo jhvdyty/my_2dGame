@@ -22,6 +22,7 @@ class GameLevel {
 protected:
     GLFWwindow* window;
     float lastFrame = 0.0f;
+    static GameLevel* currentLevel; // Add static pointer to current level
 
 public:
     GameLevel(GLFWwindow* win) : window(win) {}
@@ -30,29 +31,27 @@ public:
     virtual void init() = 0;
     virtual void cleanup() = 0;
     virtual void draw(float deltaTime) = 0;
+    virtual void handleMouseClick(GLFWwindow* window, int button, int action, int mods) = 0;
+
+    static void setCurrentLevel(GameLevel* level) {
+        currentLevel = level;
+    }
+
+    static void globalMouseCallback(GLFWwindow* window, int button, int action, int mods) {
+        if (currentLevel) {
+            currentLevel->handleMouseClick(window, button, action, mods);
+        }
+    }
 };
+
+GameLevel* GameLevel::currentLevel = nullptr;
 
 // Game manager singleton
 class GameManager {
 private:
     static GameManager* instance;
     std::stack<std::unique_ptr<GameLevel>> levels;
-    GLFWwindow* window = nullptr; // Fix: Initialize window pointer
-    std::vector<Enemi*>* activeEnemies = nullptr;
-    std::vector<Enemi*>* activeEnemies2 = nullptr;
-
-    static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-        if (instance && instance->activeEnemies) {
-            for (auto enemy : *(instance->activeEnemies)) {
-                enemy->handleMouseClick(window, button, action, mods);
-            }
-        }
-        if (instance && instance->activeEnemies2) {
-            for (auto enemy : *(instance->activeEnemies2)) {
-                enemy->handleMouseClick(window, button, action, mods);
-            }
-        }
-    }
+    GLFWwindow* window = nullptr;
 
     GameManager() = default;
 
@@ -66,17 +65,9 @@ public:
 
     void init(GLFWwindow* win) {
         window = win;
-        glfwSetMouseButtonCallback(window, mouse_button_callback);
+        glfwSetMouseButtonCallback(window, GameLevel::globalMouseCallback);
     }
 
-    void setActiveEnemies(std::vector<Enemi*>* enemies) {
-        activeEnemies = enemies;
-    }
-    void setActiveEnemies2(std::vector<Enemi*>* enemies2) {
-        activeEnemies2 = enemies2;
-    }
-
-    // Fix: Use template to properly handle derived types
     template<typename T>
     void changeLevel(std::unique_ptr<T> level) {
         if (!levels.empty()) {
@@ -84,6 +75,7 @@ public:
             levels.pop();
         }
         level->init();
+        GameLevel::setCurrentLevel(level.get()); // Set current level before pushing
         levels.push(std::move(level));
     }
 
@@ -91,7 +83,7 @@ public:
         float lastFrame = 0.0f;
 
         while (!glfwWindowShouldClose(window)) {
-            float currentFrame = static_cast<float>(glfwGetTime()); // Fix: Explicit cast to float
+            float currentFrame = static_cast<float>(glfwGetTime());
             float deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
 
@@ -112,7 +104,6 @@ GameManager* GameManager::instance = nullptr;
 
 class Level2 : public GameLevel {
 private:
-    std::vector<Enemi*> enemies;
     Character* player;
     Enemi* enemi;
     Collide* ground;
@@ -131,6 +122,12 @@ public:
         platform2(nullptr),
         arm(nullptr),
         crosshair(nullptr) {}
+
+    void handleMouseClick(GLFWwindow* window, int button, int action, int mods) override {
+        if (enemi) {
+            enemi->handleMouseClick(window, button, action, mods);
+        }
+    }
 
     void init() override {
         ground = new Collide(
@@ -167,31 +164,18 @@ public:
         enemi->addEnemiCollideObject(player);
         enemi->addCollideObject(ground);
 
-        enemies.push_back(enemi);
-
         arm->addEnemiCollideObject(player);
         arm->addCollideObject(ground);
         arm->addEnemiRotateObject(enemi);
-
-        GameManager::getInstance()->setActiveEnemies(&enemies);
     }
 
     void cleanup() override {
-        GameManager::getInstance()->setActiveEnemies(nullptr);
-
         delete ground;
         delete player;
         delete arm;
         delete crosshair;
 
-        for (auto enemy : enemies) {
-            if (enemy != enemi) {
-                delete enemy;
-            }
-        }
-        enemies.clear();
-
-        delete enemi; // Delete enemi after clearing the vector
+        delete enemi; 
 
         ground = nullptr;
         player = nullptr;
@@ -213,18 +197,9 @@ public:
         player->draw(window, deltaTime);
         player->update(deltaTime);
 
-        for (auto it = enemies.begin(); it != enemies.end();) {
-            if ((*it)->getIsAlive()) {
-                (*it)->processInput(window, deltaTime);
-                (*it)->draw(deltaTime);
-                ++it;
-            }
-            else {
-                if (*it != enemi) {
-                    delete* it;
-                }
-                it = enemies.erase(it);
-            }
+        if (enemi && enemi->getIsAlive()) {
+            enemi->processInput(window, deltaTime);
+            enemi->draw(deltaTime);
         }
 
         crosshair->draw(window);
@@ -256,8 +231,6 @@ public:
 
 class Level1 : public GameLevel {
 private:
-    std::vector<Enemi*> enemies;
-    std::vector<Enemi*> enemies2;
     Character* player;
     Enemi* enemi;
     Enemi* enemi2;
@@ -278,6 +251,15 @@ public:
         platform2(nullptr),
         arm(nullptr),
         crosshair(nullptr) {}
+
+    void handleMouseClick(GLFWwindow* window, int button, int action, int mods) override {
+        if (enemi) {
+            enemi->handleMouseClick(window, button, action, mods);
+        }
+        if (enemi2) {
+            enemi2->handleMouseClick(window, button, action, mods);
+        }
+    }
 
     void init() override {
         ground = new Collide(
@@ -337,14 +319,10 @@ public:
         enemi->addCollideObject(platform1);
         enemi->addCollideObject(platform2);
 
-        enemies.push_back(enemi);
-
         enemi2->addEnemiCollideObject(player);
         enemi2->addCollideObject(ground);
         enemi2->addCollideObject(platform1);
         enemi2->addCollideObject(platform2);
-
-        enemies2.push_back(enemi2);
 
         arm->addEnemiCollideObject(player);
         arm->addCollideObject(ground);
@@ -353,13 +331,9 @@ public:
         arm->addEnemiRotateObject(enemi);
         arm->addEnemiRotateObject(enemi2);
 
-        GameManager::getInstance()->setActiveEnemies(&enemies);
-        GameManager::getInstance()->setActiveEnemies2(&enemies2);
     }
 
     void cleanup() override {
-        GameManager::getInstance()->setActiveEnemies(nullptr);
-        GameManager::getInstance()->setActiveEnemies2(nullptr);
 
         delete ground;
         delete platform1;
@@ -368,23 +342,8 @@ public:
         delete arm;
         delete crosshair;
 
-        for (auto enemy : enemies) {
-            if (enemy != enemi) {
-                delete enemy;
-            }
-        }
-        enemies.clear();
-
-        delete enemi; // Delete enemi after clearing the vector
-
-        for (auto enemy : enemies2) {
-            if (enemy != enemi2) {
-                delete enemy;
-            }
-        }
-        enemies2.clear();
-
-        delete enemi2; // Delete enemi2 after clearing the vector
+        delete enemi; 
+        delete enemi2;
 
         ground = nullptr;
         platform1 = nullptr;
@@ -411,32 +370,15 @@ public:
         player->draw(window, deltaTime);
         player->update(deltaTime);
 
-        for (auto it = enemies.begin(); it != enemies.end();) {
-            if ((*it)->getIsAlive()) {
-                (*it)->processInput(window, deltaTime);
-                (*it)->draw(deltaTime);
-                ++it;
-            }
-            else {
-                if (*it != enemi) {
-                    delete* it;
-                }
-                it = enemies.erase(it);
-            }
+
+        if (enemi && enemi->getIsAlive()) {
+            enemi->processInput(window, deltaTime);
+            enemi->draw(deltaTime);
         }
 
-        for (auto it = enemies2.begin(); it != enemies2.end();) {
-            if ((*it)->getIsAlive()) {
-                (*it)->processInput(window, deltaTime);
-                (*it)->draw(deltaTime);
-                ++it;
-            }
-            else {
-                if (*it != enemi2) {
-                    delete* it;
-                }
-                it = enemies2.erase(it);
-            }
+        if (enemi2 && enemi2->getIsAlive()) {
+            enemi2->processInput(window, deltaTime);
+            enemi2->draw(deltaTime);
         }
 
         crosshair->draw(window);
@@ -471,6 +413,10 @@ class MainMenu : public GameLevel {
 public:
     MainMenu(GLFWwindow* win) : GameLevel(win) {}
 
+    void handleMouseClick(GLFWwindow* window, int button, int action, int mods) override {
+        // Handle menu mouse clicks if needed
+    }
+
     void init() override {
         // Initialize menu components
     }
@@ -482,8 +428,6 @@ public:
     void draw(float deltaTime) override {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        // Draw menu components
 
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
             GameManager::getInstance()->changeLevel<Level1>(
