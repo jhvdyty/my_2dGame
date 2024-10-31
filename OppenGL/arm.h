@@ -8,6 +8,7 @@
 #include <glad/glad.h> 
 
 #include <cmath>
+#include <algorithm> 
 
 #include <vector>
 #include <string> 
@@ -47,13 +48,15 @@ private:
     Character* character;
     Enemi* enemi;
 
+    std::vector<Enemi*> enemiRotateObjects;
+
     float verticalVelocity;
     const float gravity = -1.0f;
     const float jumpStrength = 3.0f;
     bool isOnGround;
 
-    float characterWidth = 0.25f;  // Øèðèíà ïåðñîíàæà â èãðîâîì ìèðå
-    float characterHeight = 0.65f; // Âûñîòà ïåðñîíàæà â èãðîâîì ìèðå
+    float characterWidth = 0.15f;  // Øèðèíà ïåðñîíàæà â èãðîâîì ìèðå
+    float characterHeight = 0.55f; // Âûñîòà ïåðñîíàæà â èãðîâîì ìèðå
 
     std::vector<Vec4> frames;  // Texture coordinates for each frame
     int currentFrame;
@@ -163,8 +166,15 @@ public:
     void addEnemiCollideObject(Character* obj) {
         character = obj;
     }
-    void addEnemiRotateObject(Enemi* obj) {
-        enemi = obj;
+    void addEnemiRotateObject(Enemi* enemy) {
+        enemiRotateObjects.push_back(enemy);
+    }
+
+    void removeEnemiRotateObject(Enemi* enemy) {
+        auto it = std::find(enemiRotateObjects.begin(), enemiRotateObjects.end(), enemy);
+        if (it != enemiRotateObjects.end()) {
+            enemiRotateObjects.erase(it);
+        }
     }
 
 
@@ -405,10 +415,10 @@ public:
             verticalVelocity = character->getY();
         }
         else if (character->getY() >= y) {
-            y = character->getY() + 0.19f; //0.251f
+            y = character->getY() + 0.15f; //0.251f, 0.19f
         }
         if (character->getY() <= y) {
-            y = character->getY() + 0.19f; //0.251f
+            y = character->getY() + 0.15f; //0.251f, 0.19f
         }
 
         move(dx, dy, deltaTime);

@@ -34,11 +34,11 @@ private:
 
     float verticalVelocity;
     const float gravity = -9.8f;
-    const float jumpStrength = 3.0f;
+    const float jumpStrength = 3.5f;
     bool isOnGround;
 
-    float characterWidth = 0.3f;  // Ширина персонажа в игровом мире
-    float characterHeight = 0.7f; // Высота персонажа в игровом мире 
+    float characterWidth = 0.2f;  // Ширина персонажа в игровом мире
+    float characterHeight = 0.55f; // Высота персонажа в игровом мире 
 
     std::vector<Vec4> frames;  // Texture coordinates for each frame
     int currentFrame;

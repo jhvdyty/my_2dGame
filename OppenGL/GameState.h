@@ -39,10 +39,16 @@ private:
     std::stack<std::unique_ptr<GameLevel>> levels;
     GLFWwindow* window = nullptr; // Fix: Initialize window pointer
     std::vector<Enemi*>* activeEnemies = nullptr;
+    std::vector<Enemi*>* activeEnemies2 = nullptr;
 
     static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
         if (instance && instance->activeEnemies) {
             for (auto enemy : *(instance->activeEnemies)) {
+                enemy->handleMouseClick(window, button, action, mods);
+            }
+        }
+        if (instance && instance->activeEnemies2) {
+            for (auto enemy : *(instance->activeEnemies2)) {
                 enemy->handleMouseClick(window, button, action, mods);
             }
         }
@@ -65,6 +71,9 @@ public:
 
     void setActiveEnemies(std::vector<Enemi*>* enemies) {
         activeEnemies = enemies;
+    }
+    void setActiveEnemies2(std::vector<Enemi*>* enemies2) {
+        activeEnemies2 = enemies2;
     }
 
     // Fix: Use template to properly handle derived types
@@ -132,13 +141,13 @@ public:
         );
 
         player = new Character(
-            -0.9f, 0.0f, 0.1f, 0.7f, 0.5f,
+            -0.9f, 0.0f, 0.1f, 0.55f, 0.5f,
             "vertex.glsl", "fragment.glsl",
             "texture/character/character.png"
         );
 
         enemi = new Enemi(
-            0.0f, 1.0f, 0.1f, 0.5f, 0.1f,
+            0.0f, 1.0f, 0.09f, 0.35f, 0.1f,
             "vertex.glsl", "fragment.glsl",
             "texture/enemi_texture.png",
             "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl"
@@ -202,7 +211,7 @@ public:
 
         player->processInput(window, deltaTime);
         player->draw(window, deltaTime);
-        player->update(deltaTime); 
+        player->update(deltaTime);
 
         for (auto it = enemies.begin(); it != enemies.end();) {
             if ((*it)->getIsAlive()) {
@@ -248,8 +257,10 @@ public:
 class Level1 : public GameLevel {
 private:
     std::vector<Enemi*> enemies;
+    std::vector<Enemi*> enemies2;
     Character* player;
     Enemi* enemi;
+    Enemi* enemi2;
     Collide* ground;
     Collide* platform1;
     Collide* platform2;
@@ -261,6 +272,7 @@ public:
         GameLevel(win),
         player(nullptr),
         enemi(nullptr),
+        enemi2(nullptr),
         ground(nullptr),
         platform1(nullptr),
         platform2(nullptr),
@@ -269,14 +281,14 @@ public:
 
     void init() override {
         ground = new Collide(
-            0.0f, -0.9f, 2.0f, 0.1f, 1.0f, 
-            "vertex_full.glsl", 
+            0.0f, -0.9f, 2.0f, 0.1f, 1.0f,
+            "vertex_full.glsl",
             "fragment_full.glsl",
             "texture/wall.jpeg"
         );
         platform1 = new Collide(
-            0.3f, -0.5f, 0.5f, 0.1f, 1.0f, 
-            "vertex_full.glsl", 
+            0.3f, -0.5f, 0.5f, 0.1f, 1.0f,
+            "vertex_full.glsl",
             "fragment_full.glsl",
             "texture/wall.jpeg"
         );
@@ -288,13 +300,20 @@ public:
         );
 
         player = new Character(
-            0.9f, 0.0f, 0.1f, 0.7f, 0.5f,
+            0.9f, 0.0f, 0.1f, 0.55f, 0.5f,
             "vertex.glsl", "fragment.glsl",
             "texture/character/character.png"
         );
 
         enemi = new Enemi(
-            0.0f, 1.0f, 0.1f, 0.5f, 0.1f,
+            0.0f, 1.0f, 0.09f, 0.35f, 0.1f,
+            "vertex.glsl", "fragment.glsl",
+            "texture/enemi_texture.png",
+            "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl"
+        );
+
+        enemi2 = new Enemi(
+            0.0f, 1.0f, 0.09f, 0.35f, 0.3f,
             "vertex.glsl", "fragment.glsl",
             "texture/enemi_texture.png",
             "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl"
@@ -320,17 +339,27 @@ public:
 
         enemies.push_back(enemi);
 
+        enemi2->addEnemiCollideObject(player);
+        enemi2->addCollideObject(ground);
+        enemi2->addCollideObject(platform1);
+        enemi2->addCollideObject(platform2);
+
+        enemies2.push_back(enemi2);
+
         arm->addEnemiCollideObject(player);
         arm->addCollideObject(ground);
         arm->addCollideObject(platform1);
-        arm->addCollideObject(platform2);           
+        arm->addCollideObject(platform2);
         arm->addEnemiRotateObject(enemi);
+        arm->addEnemiRotateObject(enemi2);
 
         GameManager::getInstance()->setActiveEnemies(&enemies);
+        GameManager::getInstance()->setActiveEnemies2(&enemies2);
     }
 
     void cleanup() override {
         GameManager::getInstance()->setActiveEnemies(nullptr);
+        GameManager::getInstance()->setActiveEnemies2(nullptr);
 
         delete ground;
         delete platform1;
@@ -348,6 +377,15 @@ public:
 
         delete enemi; // Delete enemi after clearing the vector
 
+        for (auto enemy : enemies2) {
+            if (enemy != enemi2) {
+                delete enemy;
+            }
+        }
+        enemies2.clear();
+
+        delete enemi2; // Delete enemi2 after clearing the vector
+
         ground = nullptr;
         platform1 = nullptr;
         platform2 = nullptr;
@@ -355,6 +393,7 @@ public:
         arm = nullptr;
         crosshair = nullptr;
         enemi = nullptr;
+        enemi2 = nullptr;
     }
 
     void draw(float deltaTime) {
@@ -386,6 +425,20 @@ public:
             }
         }
 
+        for (auto it = enemies2.begin(); it != enemies2.end();) {
+            if ((*it)->getIsAlive()) {
+                (*it)->processInput(window, deltaTime);
+                (*it)->draw(deltaTime);
+                ++it;
+            }
+            else {
+                if (*it != enemi2) {
+                    delete* it;
+                }
+                it = enemies2.erase(it);
+            }
+        }
+
         crosshair->draw(window);
 
         if (player->getX() > 1.0f) {
@@ -394,10 +447,11 @@ public:
             );
         }
         else if (player->getY() < -2.0f) {
-            GameManager::getInstance()->changeLevel<Level1>( 
-                std::make_unique<Level1>(window) 
+            GameManager::getInstance()->changeLevel<Level1>(
+                std::make_unique<Level1>(window)
             );
-        } else if (!player->getIsAlive()) {
+        }
+        else if (!player->getIsAlive()) {
             GameManager::getInstance()->changeLevel<Level1>(
                 std::make_unique<Level1>(window)
             );
