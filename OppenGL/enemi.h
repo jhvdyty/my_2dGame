@@ -14,21 +14,19 @@
 #include "collide.h"
 #include "character.h"
 #include "bullet_trace.h"
+#include "particle_emitter.h"
 
 #include <GLFW/glfw3.h>
 
 
 class Enemi {
 private:
-    float x, y;
     float speed;
     float width, height;
     unsigned int VAO, VBO, EBO;
     unsigned int texture1, texture2;
     Shader shader;
     std::vector<Collide*> collideObjects;
-
-    Character *character;
 
     float verticalVelocity;
     const float gravity = -1.0f;
@@ -119,6 +117,9 @@ private:
 
 
 public:
+    float x, y;
+    Character* character;
+
     Enemi(float startX, float startY, float characterWidth, float characterHeight, float moveSpeed,
         const char* vertexPath, const char* fragmentPath,
         const char* texturePath,
@@ -414,6 +415,22 @@ public:
 
 
 
+
+};
+
+class Boss : public Enemi {
+public:
+    Boss(float startX, float startY, float characterWidth, float characterHeight, float moveSpeed,
+        const char* vertexPath, const char* fragmentPath,
+        const char* texturePath, const char* bulletTraceVertexPath, const char* bulletTraceFragmentPath,
+        float screenWidth, float screenHeight)
+        :
+        Enemi(startX, startY, characterWidth, characterHeight, moveSpeed,
+            vertexPath, fragmentPath, texturePath, bulletTraceVertexPath, bulletTraceFragmentPath)
+      {
+      }
+
+    
 
 };
 

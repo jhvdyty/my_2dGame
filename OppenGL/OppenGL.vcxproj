@@ -161,12 +161,14 @@
     <ClInclude Include="crosshair.h" />
     <ClInclude Include="enemi.h" />
     <ClInclude Include="GameState.h" />
+    <ClInclude Include="particle_emitter.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment_BulletTrace.glsl" />
     <None Include="fragment_crosshair.glsl" />
+    <None Include="fragment_particle.glsl" />
     <None Include="vertex_BulletTrace.glsl" />
     <None Include="vertex_crosshair.glsl" />
     <None Include="fragment.glsl" />
@@ -175,6 +177,7 @@
     <None Include="vertex.glsl" />
     <None Include="vertex_arm.glsl" />
     <None Include="vertex_full.glsl" />
+    <None Include="vertex_particle.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

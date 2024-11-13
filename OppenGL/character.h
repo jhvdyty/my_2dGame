@@ -134,7 +134,7 @@ public:
     void takeDamage(int damage) {
         if (timeSinceLastHit >= invincibilityTime) {
             hp -= damage;
-            timeSinceLastHit = 0.0f;
+            timeSinceLastHit = 0.4f;
             std::cout << "Player took " << damage << " damage. Remaining HP: " << hp << std::endl;
             if (hp <= 0) {
                 std::cout << "Player defeated!" << std::endl;

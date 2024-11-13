@@ -111,25 +111,47 @@ private:
     Collide* platform2;
     Arm* arm;
     Crosshair* crosshair;
+    Boss* boss;
+    ParticleEmitter* particle;
+    ParticleEmitter* fallparticle;
+    float particleCooldown = 5.0f, timeSinceLastParticle = 0.0f;
+    bool change = false;
 
 public:
     Level2(GLFWwindow* win) :
         GameLevel(win),
         player(nullptr),
         enemi(nullptr),
+        boss(nullptr),
         ground(nullptr),
         platform1(nullptr),
         platform2(nullptr),
         arm(nullptr),
+        particle(nullptr),
+        fallparticle(nullptr),
         crosshair(nullptr) {}
+
 
     void handleMouseClick(GLFWwindow* window, int button, int action, int mods) override {
         if (enemi) {
             enemi->handleMouseClick(window, button, action, mods);
         }
+        if (boss) {
+            boss->handleMouseClick(window, button, action, mods);
+        }
+        if (particle) {
+            particle->handleMouseClick(window, button, action, mods);
+        }
+        if (fallparticle) {
+            fallparticle->handleMouseClick(window, button, action, mods);
+        }
     }
 
     void init() override {
+
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+
         ground = new Collide(
             0.0f, -0.9f, 2.0f, 0.1f, 1.0f,
             "vertex_full.glsl",
@@ -149,11 +171,32 @@ public:
             "texture/enemi_texture.png",
             "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl"
         );
+        boss = new Boss(
+            0.0f, -0.5f, 0.09f, 0.35f, 0.0f,
+            "vertex.glsl", "fragment.glsl",
+            "texture/enemi_texture.png",
+            "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl",
+            width, height
+        );
 
         arm = new Arm(
             0.0f, 0.0f, 0.01f, 0.05f, 2.0f,
             "vertex_arm.glsl", "fragment_arm.glsl",
             "texture/arm.png"
+        );
+
+        particle = new ParticleEmitter(
+            0.0f, -0.5f, 0.09f, 0.35f, 0.15f,
+            "vertex_particle.glsl", "fragment_particle.glsl",
+            "texture/wall.jpeg",
+            width, height, false
+        );
+
+        fallparticle = new ParticleEmitter(
+            0.0f, 0.7f, 0.09f, 0.35f, 0.15f,
+            "vertex_particle.glsl", "fragment_particle.glsl",
+            "texture/wall.jpeg",
+            width, height, true 
         );
 
         crosshair = new Crosshair(0.03f);
@@ -164,29 +207,86 @@ public:
         enemi->addEnemiCollideObject(player);
         enemi->addCollideObject(ground);
 
+        boss->addEnemiCollideObject(player);
+        boss->addCollideObject(ground);
+
+        particle->addEnemiCollideObject(player);
+
+        fallparticle->addEnemiCollideObject(player);
+
         arm->addEnemiCollideObject(player);
         arm->addCollideObject(ground);
         arm->addEnemiRotateObject(enemi);
+        arm->addEnemiRotateObject(boss);
     }
 
     void cleanup() override {
-        delete ground;
-        delete player;
-        delete arm;
-        delete crosshair;
+        // Сначала удаляем объекты, которые зависят от других объектов
+        if (arm) {
+            delete arm;
+            arm = nullptr;
+        }
 
-        delete enemi; 
+        if (crosshair) {
+            delete crosshair;
+            crosshair = nullptr;
+        }
 
-        ground = nullptr;
-        player = nullptr;
-        arm = nullptr;
-        crosshair = nullptr;
-        enemi = nullptr;
+        // Удаляем врагов
+        if (enemi) {
+            delete enemi;
+            enemi = nullptr;
+        }
+
+        if (boss) {
+            delete boss;
+            boss = nullptr;
+        }
+
+        //Удаляем частицы только если босс мертв или происходит смена уровня
+        if ((!boss || !boss->getIsAlive() || change) && particle) {
+            delete particle;
+            particle = nullptr;
+            change = false;
+        }
+
+        if ((!boss || !boss->getIsAlive() || change) && fallparticle) {
+            delete fallparticle;
+            fallparticle = nullptr;
+            change = false;
+        }
+
+        //delete particle;
+        //particle = nullptr;
+
+        // Удаляем игрока
+        if (player) {
+            delete player;
+            player = nullptr;
+        }
+
+        // Удаляем коллайдеры
+        if (ground) {
+            delete ground;
+            ground = nullptr;
+        }
+
+        if (platform1) {
+            delete platform1;
+            platform1 = nullptr;
+        }
+
+        if (platform2) {
+            delete platform2;
+            platform2 = nullptr;
+        }
     }
 
     void draw(float deltaTime) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        timeSinceLastParticle += deltaTime;
 
         ground->draw();
 
@@ -202,19 +302,47 @@ public:
             enemi->draw(deltaTime);
         }
 
+        if (boss && boss->getIsAlive()) {
+            boss->processInput(window, deltaTime);
+            boss->draw(deltaTime);
+        }
+
+        if (fallparticle && fallparticle->getIsAlive()) {
+            fallparticle->processInput(window, deltaTime);
+            fallparticle->drawParticles();
+        }
+        else if (timeSinceLastParticle >= particleCooldown && boss && boss->getIsAlive() && fallparticle && !fallparticle->getIsAlive()) {
+            timeSinceLastParticle = 0.0f;
+            fallparticle->restart();
+        
+        }
+
+        if (particle && particle->getIsAlive()) {
+            particle->processInput(window, deltaTime);
+            particle->drawParticles();
+        }
+        else if (timeSinceLastParticle >= particleCooldown && boss && boss->getIsAlive() && particle && !particle->getIsAlive()) {
+            timeSinceLastParticle = 0.0f;
+            particle->restart();
+
+        }
+
         crosshair->draw(window);
 
         if (player->getX() < -1.0f) {
+            change = true;
             GameManager::getInstance()->changeLevel<Level1>(
                 std::make_unique<Level1>(window)
             );
         }
         else if (player->getY() < -2.0f) {
+            change = true;
             GameManager::getInstance()->changeLevel<Level2>(
                 std::make_unique<Level2>(window)
             );
         }
         else if (!player->getIsAlive()) {
+            change = true;
             GameManager::getInstance()->changeLevel<Level2>(
                 std::make_unique<Level2>(window)
             );
@@ -240,6 +368,7 @@ private:
     Arm* arm;
     Crosshair* crosshair;
 
+
 public:
     Level1(GLFWwindow* win) :
         GameLevel(win),
@@ -251,6 +380,7 @@ public:
         platform2(nullptr),
         arm(nullptr),
         crosshair(nullptr) {}
+
 
     void handleMouseClick(GLFWwindow* window, int button, int action, int mods) override {
         if (enemi) {
@@ -334,25 +464,49 @@ public:
     }
 
     void cleanup() override {
+        // Сначала удаляем объекты, которые зависят от других объектов
+        if (arm) {
+            delete arm;
+            arm = nullptr;
+        }
 
-        delete ground;
-        delete platform1;
-        delete platform2;
-        delete player;
-        delete arm;
-        delete crosshair;
+        if (crosshair) {
+            delete crosshair;
+            crosshair = nullptr;
+        }
 
-        delete enemi; 
-        delete enemi2;
+        // Удаляем врагов
+        if (enemi) {
+            delete enemi;
+            enemi = nullptr;
+        }
 
-        ground = nullptr;
-        platform1 = nullptr;
-        platform2 = nullptr;
-        player = nullptr;
-        arm = nullptr;
-        crosshair = nullptr;
-        enemi = nullptr;
-        enemi2 = nullptr;
+        if (enemi2) {
+            delete enemi2;
+            enemi2 = nullptr;
+        }
+
+        // Удаляем игрока
+        if (player) {
+            delete player;
+            player = nullptr;
+        }
+
+        // Удаляем коллайдеры
+        if (ground) {
+            delete ground;
+            ground = nullptr;
+        }
+
+        if (platform1) {
+            delete platform1;
+            platform1 = nullptr;
+        }
+
+        if (platform2) {
+            delete platform2;
+            platform2 = nullptr;
+        }
     }
 
     void draw(float deltaTime) {
