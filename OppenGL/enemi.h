@@ -20,10 +20,14 @@
 
 
 class Enemi {
+protected:
+    unsigned int VAO, VBO, EBO;
+
+    virtual void setupMesh();
+
 private:
     float speed;
     float width, height;
-    unsigned int VAO, VBO, EBO;
     unsigned int texture1, texture2;
     Shader shader;
     std::vector<Collide*> collideObjects;
@@ -120,7 +124,7 @@ public:
     float x, y;
     Character* character;
 
-    Enemi(float startX, float startY, float characterWidth, float characterHeight, float moveSpeed,
+    Enemi(float startX, float startY, float characterWidth, float characterHeight, float moveSpeed, int hp,
         const char* vertexPath, const char* fragmentPath,
         const char* texturePath,
         const char* bulletTraceVertexPath, const char* bulletTraceFragmentPath)
@@ -128,7 +132,7 @@ public:
         shader(vertexPath, fragmentPath), bulletTraceShader(bulletTraceVertexPath, bulletTraceFragmentPath),
         timeSinceLastFrame(0.0f), isMoving(false), facingRight(true),
         quadLeft(-width / 2), quadRight(width / 2), quadTop(height / 2), quadBottom(-height / 2),
-        hp(100), isAlive(true), attackCooldown(1.0f), timeSinceLastAttack(0.0f), damage(10)
+        hp(hp), isAlive(true), attackCooldown(1.0f), timeSinceLastAttack(0.0f), damage(10)
     {
         setupMesh();
         texture1 = loadTexture(texturePath);
@@ -250,43 +254,6 @@ public:
     }
 
 
-    void setupMesh() {
-        float vertices[] = {
-            // Positions                                // Colors           // Texture Coords
-             characterWidth / 2,  characterHeight / 2, 0.0f, 1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Top Right
-             characterWidth / 2, -characterHeight / 2, 0.0f, 0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // Bottom Right
-            -characterWidth / 2, -characterHeight / 2, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, 1.0f, // Bottom Left
-            -characterWidth / 2,  characterHeight / 2, 0.0f, 1.0f, 1.0f, 0.0f,   0.0f, 0.0f  // Top Left 
-        };
-
-        unsigned int indices[] = {
-            0, 1, 3,
-            1, 2, 3
-        };
-
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);
-
-        glBindVertexArray(VAO);
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-        glEnableVertexAttribArray(2);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-    }
-
     float getX() const { return x; }
     float getY() const { return y; }
 
@@ -377,6 +344,10 @@ public:
         updateAndDrawBulletTraces(deltaTime);
     }
 
+    void make_dead() {
+        isAlive = false;
+    }
+
     void processInput(GLFWwindow* window, float deltaTime) {
         float dx = 0;
         float dy = 0;
@@ -413,24 +384,101 @@ public:
     }
 
 
-
-
-
 };
 
+void Enemi::setupMesh() {
+    float vertices[] = {
+        // Positions                                // Colors           // Texture Coords
+         characterWidth / 2,  characterHeight / 2, 0.0f, 1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Top Right
+         characterWidth / 2, -characterHeight / 2, 0.0f, 0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // Bottom Right
+        -characterWidth / 2, -characterHeight / 2, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, 1.0f, // Bottom Left
+        -characterWidth / 2,  characterHeight / 2, 0.0f, 1.0f, 1.0f, 0.0f,   0.0f, 0.0f  // Top Left 
+    };
+
+    unsigned int indices[] = {
+        0, 1, 3,
+        1, 2, 3
+    };
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
 class Boss : public Enemi {
+private:
+
+    static constexpr float bossCharacterWidth = 0.50f;  // Ширина босса в игровом мире
+    static constexpr float bossCharacterHeight = 0.50f; // Высота босса в игровом мире
+
+    void setupMesh() override {
+        float vertices[] = {
+            // Positions                                // Colors           // Texture Coords
+             bossCharacterWidth / 2,  bossCharacterHeight / 2, 0.0f, 1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Top Right
+             bossCharacterWidth / 2, -bossCharacterHeight / 2, 0.0f, 0.0f, 1.0f, 0.0f,   1.0f, 1.0f, // Bottom Right
+            -bossCharacterWidth / 2, -bossCharacterHeight / 2, 0.0f, 0.0f, 0.0f, 1.0f,   0.0f, 1.0f, // Bottom Left
+            -bossCharacterWidth / 2,  bossCharacterHeight / 2, 0.0f, 1.0f, 1.0f, 0.0f,   0.0f, 0.0f  // Top Left 
+        };
+
+        unsigned int indices[] = {
+            0, 1, 3,
+            1, 2, 3
+        };
+
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
+
+        glBindVertexArray(VAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
+
 public:
-    Boss(float startX, float startY, float characterWidth, float characterHeight, float moveSpeed,
+    Boss(float startX, float startY, float characterWidth, float characterHeight, float moveSpeed, int hp,
         const char* vertexPath, const char* fragmentPath,
         const char* texturePath, const char* bulletTraceVertexPath, const char* bulletTraceFragmentPath,
         float screenWidth, float screenHeight)
         :
-        Enemi(startX, startY, characterWidth, characterHeight, moveSpeed,
+        Enemi(startX, startY, characterWidth, characterHeight, moveSpeed, hp,
             vertexPath, fragmentPath, texturePath, bulletTraceVertexPath, bulletTraceFragmentPath)
       {
+        setupMesh();
       }
 
-    
+
 
 };
 

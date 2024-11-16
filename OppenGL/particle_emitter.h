@@ -273,7 +273,7 @@ public:
             else {
                 std::random_device rd;
                 std::mt19937 gen(rd());
-                std::uniform_real_distribution<> dis(-1.0, 0.0);
+                std::uniform_real_distribution<> dis(-1.0, 0.7);
 
                 double random_number = dis(gen);
 

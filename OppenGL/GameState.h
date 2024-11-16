@@ -114,7 +114,8 @@ private:
     Boss* boss;
     ParticleEmitter* particle;
     ParticleEmitter* fallparticle;
-    float particleCooldown = 5.0f, timeSinceLastParticle = 0.0f;
+    float particleCooldown = 3.0f, timeSinceLastParticle = 0.0f;
+    float FallparticleCooldown = 3.0f, timeSinceLastFallParticle = 0.0f;
     bool change = false;
 
 public:
@@ -160,19 +161,19 @@ public:
         );
 
         player = new Character(
-            -0.9f, 0.0f, 0.1f, 0.55f, 0.5f,
+            -0.9f, 0.0f, 0.1f, 0.55f, 0.6f,
             "vertex.glsl", "fragment.glsl",
             "texture/character/character.png"
         );
 
         enemi = new Enemi(
-            0.0f, 1.0f, 0.09f, 0.35f, 0.1f,
+            0.0f, 1.0f, 0.09f, 0.09f, 0.3f, 100000,
             "vertex.glsl", "fragment.glsl",
-            "texture/enemi_texture.png",
+            "texture/enemi_caterpillar.png",
             "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl"
         );
         boss = new Boss(
-            0.0f, -0.5f, 0.09f, 0.35f, 0.0f,
+            0.9f, -0.5f, 0.09f, 0.35f, 0.0f, 500,
             "vertex.glsl", "fragment.glsl",
             "texture/enemi_texture.png",
             "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl",
@@ -186,16 +187,16 @@ public:
         );
 
         particle = new ParticleEmitter(
-            0.0f, -0.5f, 0.09f, 0.35f, 0.15f,
+            0.9f, -0.5f, 0.18f, 0.18f, 0.9f,
             "vertex_particle.glsl", "fragment_particle.glsl",
-            "texture/wall.jpeg",
+            "texture/particle.png",
             width, height, false
         );
 
         fallparticle = new ParticleEmitter(
-            0.0f, 0.7f, 0.09f, 0.35f, 0.15f,
+            0.0f, 0.7f, 0.18f, 0.18f, 1.0f,
             "vertex_particle.glsl", "fragment_particle.glsl",
-            "texture/wall.jpeg",
+            "texture/particle.png",
             width, height, true 
         );
 
@@ -256,6 +257,7 @@ public:
             change = false;
         }
 
+
         //delete particle;
         //particle = nullptr;
 
@@ -287,6 +289,7 @@ public:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         timeSinceLastParticle += deltaTime;
+        timeSinceLastFallParticle += deltaTime;
 
         ground->draw();
 
@@ -297,7 +300,7 @@ public:
         player->draw(window, deltaTime);
         player->update(deltaTime);
 
-        if (enemi && enemi->getIsAlive()) {
+        if (enemi && enemi->getIsAlive() && boss && boss->getIsAlive()) {
             enemi->processInput(window, deltaTime);
             enemi->draw(deltaTime);
         }
@@ -306,13 +309,17 @@ public:
             boss->processInput(window, deltaTime);
             boss->draw(deltaTime);
         }
+        else{
+            enemi->make_dead();
+        }
+
 
         if (fallparticle && fallparticle->getIsAlive()) {
             fallparticle->processInput(window, deltaTime);
             fallparticle->drawParticles();
         }
-        else if (timeSinceLastParticle >= particleCooldown && boss && boss->getIsAlive() && fallparticle && !fallparticle->getIsAlive()) {
-            timeSinceLastParticle = 0.0f;
+        else if (timeSinceLastFallParticle >= FallparticleCooldown && boss && boss->getIsAlive() && fallparticle && !fallparticle->getIsAlive()) {
+            timeSinceLastFallParticle = 0.0f;
             fallparticle->restart();
         
         }
@@ -418,14 +425,14 @@ public:
         );
 
         enemi = new Enemi(
-            0.0f, 1.0f, 0.09f, 0.35f, 0.1f,
+            0.0f, 1.0f, 0.09f, 0.35f, 0.1f, 100,
             "vertex.glsl", "fragment.glsl",
             "texture/enemi_texture.png",
             "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl"
         );
 
         enemi2 = new Enemi(
-            0.0f, 1.0f, 0.09f, 0.35f, 0.3f,
+            0.0f, 1.0f, 0.09f, 0.35f, 0.3f, 100,
             "vertex.glsl", "fragment.glsl",
             "texture/enemi_texture.png",
             "vertex_BulletTrace.glsl", "fragment_BulletTrace.glsl"
