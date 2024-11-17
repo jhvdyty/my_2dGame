@@ -115,7 +115,7 @@ private:
     ParticleEmitter* particle;
     ParticleEmitter* fallparticle;
     float particleCooldown = 3.0f, timeSinceLastParticle = 0.0f;
-    float FallparticleCooldown = 3.0f, timeSinceLastFallParticle = 0.0f;
+    float FallparticleCooldown = 2.5f, timeSinceLastFallParticle = 0.0f;
     bool change = false;
 
 public:
@@ -194,7 +194,7 @@ public:
         );
 
         fallparticle = new ParticleEmitter(
-            0.0f, 0.7f, 0.18f, 0.18f, 1.0f,
+            0.0f, 0.7f, 0.18f, 0.18f, 1.1f,
             "vertex_particle.glsl", "fragment_particle.glsl",
             "texture/particle.png",
             width, height, true 

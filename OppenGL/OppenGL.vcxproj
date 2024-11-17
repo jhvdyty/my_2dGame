@@ -83,8 +83,8 @@
     <LibraryPath>C:\Users\Admin\Documents\simle_game2-master\opengl;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\Admin\Documents\simle_game2-master\opengl;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Admin\Documents\simle_game2-master\opengl;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)\opengl;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\opengl;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
