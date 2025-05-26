@@ -96,9 +96,10 @@ Spacebar: Start the game (from main menu)
 Player transitions between levels when reaching screen bounds or falling/dying.
 
 Screenshots
-![image](https://github.com/user-attachments/assets/51b3c934-804a-42c8-8963-0bfbeed4795a)
-![image](https://github.com/user-attachments/assets/36a2f6e3-429a-4f93-8d91-72444ebe2e3a)
-![image](https://github.com/user-attachments/assets/3493f0a0-6ab9-4bdf-b09a-3c86a18d6337)
+
+![Снимок экрана (2041)](https://github.com/user-attachments/assets/bde26298-1e81-4c32-8f15-90457762f79e)
+
+![Снимок экрана (2040)](https://github.com/user-attachments/assets/44a93d52-5e0c-47fb-8010-9cdd89398b95)
 
 
 License
